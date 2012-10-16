@@ -1,0 +1,44 @@
+﻿@model IEnumerable<PirateChatSite.Models.UserProfile>
+
+@{
+    ViewBag.Title = "AddContact";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Add Contact</h2>
+
+<table>
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.UserName)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.UserName)
+        </td>
+        <td>
+            <button class="addContactButton" data-id="@item.UserId">Add Contact</button>
+        </td>
+    </tr>
+}
+
+</table>
+
+@section scripts
+{
+    <script>
+        $(".addContactButton").click(function(e) {
+            var userId = $(e.target).attr("data-id");
+            $.post("/Account/AddContact/", { "id": userId }, function xhrSuccess(data) { }).error(function error() {
+                alert("Failed to add contact.");
+                e.target.disabled = false;
+            })
+            e.target.disabled = true;
+        });
+            
+    </script>
+}

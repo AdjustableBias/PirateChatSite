@@ -1,0 +1,166 @@
+﻿@model PirateChatSite.Models.UserProfile
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section scripts
+{
+    <script src="TODO: Point this at your pirate chat node instance/socket.io/socket.io.js"></script>
+    <script>
+        // TODO: separate some of this logic from its UI - just want to get a quick working example to test the server for now
+        var userStatusCells = {};
+        var userChatButtons = {};
+        var userChatBoxes = {};
+        var socket;
+
+        var startChat = function startChat(withUserName) {
+            if (!userChatBoxes[withUserName]) {
+                userChatBoxes[withUserName] = new ChatBox(withUserName);
+                document.getElementById("chatBoxesArea").appendChild(userChatBoxes[withUserName].containerDiv);
+            }
+
+            var chatBox = userChatBoxes[withUserName];
+
+            chatBox.inputBox.focus();
+            return chatBox;
+        }
+
+        var addUser = function addUser(name, status) {
+            var row = document.createElement("tr");
+            var nameCell = document.createElement("td");
+            nameCell.textContent = name;
+            var statusCell = document.createElement("td");
+            statusCell.textContent = status;
+            userStatusCells[name] = statusCell;
+
+            var chatCell = document.createElement("td");
+            var chatButton = document.createElement("button");
+            chatButton.textContent = "chat";
+            if (status === "offline") {
+                chatButton.disabled = true;
+            }
+            chatButton.addEventListener("click", function () {
+                startChat(name);
+            });
+            userChatButtons[name] = chatButton;
+
+            chatCell.appendChild(chatButton);
+
+            row.appendChild(nameCell);
+            row.appendChild(statusCell);
+            row.appendChild(chatCell);
+
+            document.getElementById("userStatusTable").appendChild(row);
+        }
+        function ChatBox(userName) {
+            this.containerDiv = document.createElement("div");
+            this.containerDiv.style.width = "80%";
+            this.containerDiv.style.height = "500px";
+            this.containerDiv.style.overflow = "auto";
+
+            var title = document.createElement("h3");
+            title.textContent = userName;
+            this.containerDiv.appendChild(title);
+
+            this.messagesDiv = document.createElement("div");
+            this.containerDiv.appendChild(this.messagesDiv);
+            this.inputBox = document.createElement("input");
+            this.inputBox.type = "text";
+            var chatBox = this;
+            this.inputBox.addEventListener("keydown", function (e) {
+                if (e.keyCode == 13 /* Enter */) {
+                    e.preventDefault();
+                    var text = e.target.value;
+                    e.target.value = "";
+                    if (socket) {
+                        socket.send(JSON.stringify({ messageId: "ChatMessage", targetName: userName, messageText: text }));
+                        chatBox.addMessage("Me", text, "#777777");
+                    } else {
+                        if (window.console) { console.error("can't find the socket"); }
+                    }
+                }
+            });
+
+            this.containerDiv.appendChild(this.inputBox);
+        }
+
+        ChatBox.prototype.addMessage = function ChatBox$addMessage(from, messageText, color) {
+            var messageDiv = document.createElement("div");
+            var fromTag = document.createElement("strong");
+            fromTag.textContent = from + ": ";
+            messageDiv.appendChild(fromTag);
+            var messageTag = document.createElement("span");
+            if (color) {
+                messageTag.style.color = color;
+            }
+            messageTag.textContent = messageText;
+            messageDiv.appendChild(messageTag);
+            this.messagesDiv.appendChild(messageDiv);
+        }
+
+        $(document).ready(function () {
+            $.ajax({ url: "/chat/ContactsList", cache: false }).done(function (jsonResult) {
+
+                for (var i = 0; i < jsonResult.user.subscribedToNames.length; i++) {
+                    var name = jsonResult.user.subscribedToNames[i];
+                    addUser(name, "offline");
+                }
+                connectToChat(jsonResult);
+            });
+
+            var connectToChat = function (contactList) {
+                socket = io.connect("TODO: Point this at your pirate chat node instance");
+
+                socket.on("connect", function () {
+                    var messageObj = contactList;
+                    contactList.messageId = "Initialize";
+                    socket.send(JSON.stringify(messageObj));
+                });
+
+                socket.on("message", function (message) {
+                    var messageObj = JSON.parse(message);
+
+                    switch (messageObj.messageId) {
+                        case "ChatMessage":
+                            if (window.console) { console.dir(messageObj); }
+                            startChat(messageObj.fromUser).addMessage(messageObj.fromUser, messageObj.messageText);
+                            break;
+                        case "StatusChange":
+                            var userName = messageObj.user;
+                            var newStatus = messageObj.status;
+                            if (!userStatusCells.hasOwnProperty(userName)) {
+                                addUser(userName, newStatus);
+                            } else {
+                                userStatusCells[userName].textContent = newStatus;
+                                if (newStatus === "offline") {
+                                    userChatButtons[userName].disabled = true;
+                                }
+                                else {
+                                    userChatButtons[userName].disabled = false;
+                                }
+                            }
+                            break;
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+<h2>Contacts</h2>
+
+<table id="userStatusTable">
+    <tr>
+        <th>
+            Contact
+        </th>
+        <th>
+            Status
+        </th>
+        <th></th>
+    </tr>
+</table>
+<div>@Html.ActionLink("Add Contacts", "AddContacts", "Account")</div>
+<div id="chatBoxesArea"></div>

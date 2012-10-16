@@ -1,0 +1,29 @@
+﻿@model IEnumerable<PirateChatSite.Models.Contact>
+
+@{
+    ViewBag.Title = "Contacts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Contacts</h2>
+
+<p>
+    @Html.ActionLink("Add Contacts", "AddContacts")
+</p>
+<table>
+    <tr>
+        <th>
+            Contact
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Follows.UserName)
+        </td>
+    </tr>
+}
+
+</table>

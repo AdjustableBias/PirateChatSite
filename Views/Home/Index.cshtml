@@ -1,0 +1,35 @@
+﻿@{
+    ViewBag.Title = "Welcome";
+}
+@section featured {
+    <section class="featured">
+        <div class="content-wrapper">
+            <hgroup class="title">
+                <h1>@ViewBag.Title.</h1>
+                <h2>@ViewBag.Message</h2>
+            </hgroup>
+            <p>
+                This is a simple chat service.  The pages and account management you see are hosted as an Azure ASP.Net MVC 
+                application while the chat presence and messaging service are hosted as a Node service running on Azure using sockets.io.
+                To learn about me, visit: <a href="http://www.adjustablebias.com">www.adjustablebias.com</a>.
+            </p>
+        </div>
+    </section>
+}
+<h3>We suggest the following:</h3>
+<ol class="round">
+    <li class="one">
+        <h5>Getting Started</h5>
+        Create an account or login using your Facebook account using the links at the upper right.
+    </li>
+
+    <li class="two">
+        <h5>Find contacts</h5>
+        Add a contact using the contacts link or clicking here: @Html.ActionLink("Add a contact.", "AddContacts", "Account")
+    </li>
+
+    <li class="three">
+        <h5>Chat!</h5>
+        Start @Html.ActionLink("chatting!", "Index", "Chat")
+    </li>
+</ol>
