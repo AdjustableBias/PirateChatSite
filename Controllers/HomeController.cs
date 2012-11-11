@@ -10,7 +10,7 @@ namespace PirateChatSite.Controllers
     {
         public ActionResult Index()
         {
-            ViewBag.Message = "Based on the first part of a Facebook interview question.";
+            ViewBag.Message = "";
 
             return View();
         }
